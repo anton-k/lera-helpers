@@ -34,13 +34,11 @@ main = do
       , save "keys" =<< keyboard ui
       ]
 
-
 getFullDir :: String -> IO String
 getFullDir prefix =
   fmap ((prefix <>) . toFormat) getCurrentTime
   where
     toFormat = formatTime defaultTimeLocale "-%F-%T"
-
 
 -----------------------------------------
 -- keyboard
@@ -61,6 +59,7 @@ keyboard ui = hall 0.18 $ mul (ui'kbdVol ui) $ sum
   ]
   where
     rev (al, ar) = freeverb al ar 0.9 0.75
+
 
 -----------------------------------------
 
