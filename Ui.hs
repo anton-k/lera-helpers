@@ -13,23 +13,41 @@ import qualified Csound.Control.Midi.LaunchKey as L (knob')
 -- | UI for the midi controller.
 data Ui = Ui
   { ui'drumKeys   :: Evt (D, Tab, Tab, Tab)
+    -- ^ select drum beat patterns
   , ui'padKeys    :: Evt (D, D, Tab, Tab, Tab)
+    -- ^ select pad patterns
   , ui'masterVol  :: Sig
+    -- ^ master volume knob
   , ui'beatVol    :: Sig
+    -- ^ drums volume
   , ui'percVol    :: Sig
+    -- ^ percussion volume
   , ui'padVol     :: Sig
+    -- ^ pad volume
   , ui'tickVol    :: Sig
+    -- ^ metronome volume (only for rehearsals)
   , ui'arpVol     :: Sig
+    -- ^ arpegiators volume
   , ui'noiseVol   :: Sig
+    -- ^ environmental noises volume
   , ui'padMix     :: Sig
+    -- ^ blend of two pads
   , ui'noiseMix   :: Sig
+    -- ^ blend of four noises
   , ui'vcfFreq    :: Sig
+    -- ^ Frequency of master Low-pass filter
   , ui'vcfRes     :: Sig
+    -- ^ resonance of master Low-pass filter
   , ui'beatCuts   :: Sig
+    -- ^ amount of random beat shuffle
   , ui'tanpuraVol :: Sig
+    -- ^ volume of the tanpura sound
   , ui'kbdVol     :: Sig
+    -- ^ volume of midi keyboard instruments
   , ui'extMetroVol :: Sig
+    -- ^ external metronome
   , ui'intMetroVol :: Sig
+    -- ^ internal metronome (sended to headphones, TODO)
   }
 
 mchn = 9
@@ -59,6 +77,7 @@ readUi = do
   where
     knb = L.knob' (LkChn mchn)
 
+-- Select beats
 beatKey :: SE (Evt (D, Tab, Tab, Tab))
 beatKey = do
   arrUp <- arrowUpSig (LkChn mchn)
@@ -92,6 +111,7 @@ beatKey = do
     ins bpm name1 name2 name3 =
       (bpm, wavs ("Beats/" ++ name1) 0 WavAll, wavs ("Perc/" ++ name2) 0 WavAll, wavs ("Metros/" ++ name3) 0 WavAll)
 
+-- | Select PADs
 padKey :: SE (Evt (D, D, Tab, Tab, Tab))
 padKey = do
   arrDn <- arrowDownSig (LkChn mchn)
@@ -123,6 +143,8 @@ padKey = do
 
     numsExt = [6, 7, 8]
 
+-- | Mix four noise sources with a single knob.
+-- We adjust them on a single line.
 mixNoise :: Sig -> Sig2 -> Sig2 -> Sig2 -> Sig2 -> Sig2
 mixNoise k = cfd4 x y
   where
