@@ -43,7 +43,7 @@ getFullDir prefix =
 -----------------------------------------
 -- keyboard
 
-
+-- | Midi instruments that are triggered with keyboard
 keyboard :: Ui -> SE Sig2
 keyboard ui = hall 0.18 $ mul (ui'kbdVol ui) $ sum
   [ mul 0.4 $ midin 3 $ (onMsg $ fmap  fromMono . mul (leg 0.01 1 1 1.5) . polySynth)
@@ -60,9 +60,9 @@ keyboard ui = hall 0.18 $ mul (ui'kbdVol ui) $ sum
   where
     rev (al, ar) = freeverb al ar 0.9 0.75
 
-
 -----------------------------------------
 
+-- | Beat instrument
 beatIns :: Sig -> Sig -> Sig -> Sig -> Sig -> Ref Sig -> Sig -> (D, Tab, Tab, Tab) -> SE (Sig2, Sig2, Sig2)
 beatIns beatVol percVol tickVol metroIntVol metroExtVol arpRef beatCuts (bpm, beatTab, percTab, metroTab) = do
   baseNoteIndex <- readRef arpRef
@@ -81,13 +81,14 @@ beatIns beatVol percVol tickVol metroIntVol metroExtVol arpRef beatCuts (bpm, be
 
     tickSig = fromMono $ ticks 4 (sig bpm)
 
+-- | Pad instrument
 padIns :: Sig -> (D, Tab, Tab) -> SE Sig2
 padIns blend (cps, file1, file2) = do
   rndPad <- fmap kr $ rspline (-0.15) 0.15 0.07 0.25
   pure $ mul (linsegr [0, 0.2, 1] 0.5 0) $
-  --  cfd (blend + rndPad) (loscCfd' (0, 18) 1 file1) (loscCfd' (0, 18) 1 file2)
     cfd blend (losc file1) (losc file2)
 
+-- | Play tanpuras
 tanpuraIns :: Tab -> SE Sig2
 tanpuraIns file = do
   cutTanp <- fmap kr $ rspline 0 1 0.07 0.25
@@ -95,7 +96,7 @@ tanpuraIns file = do
    -- loscCfd' (0, 20) 1 file
     losc file
 
-
+-- | Play environmental sounds
 nature :: Sig -> Sig2
 nature k = mixNoise k
   (get "BIN - Airport_Atmosphere_II.wav")
@@ -107,6 +108,7 @@ nature k = mixNoise k
 
 -------------------------------------------------------
 
+-- | All playbacks together
 synt :: Save -> Ui -> SE Sig2
 synt save ui@Ui{..} = do
   arpRef <- newGlobalCtrlRef 3
@@ -126,19 +128,18 @@ synt save ui@Ui{..} = do
             + (mul 1.5 $ save "tanp" $ mul ui'tanpuraVol tanp))
       , mul 0.8 $ save "noise" $ mul ui'noiseVol $ nat]
 
+-- | Process the output
 syntFx :: Ui -> Sig -> Sig
 syntFx Ui{..} a =
   (\x -> zdf_2pole x (filtScale ui'vcfFreq) (0.5 + 20 * ui'vcfRes)) a
-  -- (\x -> lowpass2 x (filtScale ui'vcfFreq) 1) a
   where
     filtScale x = 25 + 19000 * expcurve x 30
 
+-- | Beat shuffle
 toCuts :: D -> Sig -> Sig2 -> Sig2
 toCuts bpm compl (al, ar) = cfd compl (al, ar) (bbcuts al ar (4 * bpm / 120) 8 4 1 2)
 
 ----------------------------------------------------------------------------------
-
-
 
 {- interesting idea to make instances of renderable for show
  - and have specific instances for our cases. and we can do not write dac all the time in ghci
@@ -148,32 +149,7 @@ instance RenderCsd Int where
   csdArity _ = CsdArity 0 0
 -}
 
-
 b1 = wavAll "Beats/Beat-90.wav"
 b2 = wavAll "Beats/Beat-100.wav"
 p1 = wavAll "Pads/E-Pad.wav"
 p2 = wavAll "Pads/D-Pad.wav"
-
-{-
-    arps baseNoteIndex = atTuple
-      [ toArp "Arps/D-Arp-90.wav"
-      , toArp "Arps/E-Arp-90.wav"
-      , toArp "Arps/B-Arp-90.wav"
-      , 0
-      ]
-      baseNoteIndex
-
-    toArp name = (chn WavLeft, chn WavRight)
-      where
-        chn x = mincer (len * phasor (speed / len)) arpVol 1 (wavs name 0 x) 1
-        len = sig $ filelen $ text name
-        speed = sig bpm / 90
--}
-
-bass :: Sig -> Sig -> Sig -> Sig -> SE Sig2
-bass basVol bpm pulse base = pure $ fromMono bas1
-  where
-    bas1 =
-      let cps = constSeq (fmap (base * ) [1, 9/8, 6/5, 9/8, 3/2, 8/9, 6/5, 1]) (bpm / 120)
-      in  mul (basVol* 4) $ {-at (mlp (80 + 270 * pulse) 0.2)-} at (mlp (20 + 130 * uosc' (-0.25) (8 * bpm / 120)) 0.3) $ saw cps + sqr (cps * cent 15)
-    dt = constSeq [2, 4, 2] (bpm / 120) * bpm / 120

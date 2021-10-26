@@ -10,6 +10,7 @@ import Csound.Base
 import Csound.Control.Midi.LaunchKey
 import qualified Csound.Control.Midi.LaunchKey as L (knob')
 
+-- | UI for the midi controller.
 data Ui = Ui
   { ui'drumKeys   :: Evt (D, Tab, Tab, Tab)
   , ui'padKeys    :: Evt (D, D, Tab, Tab, Tab)
@@ -33,6 +34,7 @@ data Ui = Ui
 
 mchn = 9
 
+-- Read midi messages
 readUi :: SE Ui
 readUi = do
   ui'drumKeys <- beatKey
@@ -76,7 +78,6 @@ beatKey = do
       , ins 90  "Beat-90.wav" "Perc-90.wav"   "metro-90.wav"
       , ins 100 "Beat-100.wav" "Perc-100.wav" "metro-100.wav"
       , ins 125 "Beat-125.wav" "Perc-125.wav" "metro-125.wav"
-
       ]
 
     btns = [1, 2, 3, 4, 5, 1, 2]
